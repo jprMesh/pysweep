@@ -5,6 +5,9 @@ def onObjectClick(event):
     board_loc = event.widget.find_closest(event.x, event.y)[0]
     reveal(rectlist[board_loc])
 
+def lose():
+    print "you lose"
+
 def reveal(tuple_loc):
     x, y = tuple_loc
     if playboard[x][y] < 0:
@@ -20,29 +23,26 @@ def reveal(tuple_loc):
     else:
         display(x,y)
 
-def lose():
-    print "you lose"
-
 def display(x, y):
     loc = board.find_closest(x*tilesize, y*tilesize)
     board.itemconfigure(loc, fill="")
     playboard[x][y] = -1
 
 if __name__ == "__main__":
-    rows = 10
+    rows = 50
     cols = 10
     tilesize = 20
-    totalmines = 15
+    totalmines = rows*cols*0.15
 
     root = Tk()
     board = Canvas(root, width=tilesize*rows+40, height=tilesize*cols+40)
     rectlist = dict()
-    playboard = [[0 for x in range(rows+2)] for x in range(cols+2)]
+    playboard = [[0 for x in range(cols+2)] for x in range(rows+2)]
     
     mines = 0
     while mines < totalmines:
-        xmine = randint(1,10)
-        ymine = randint(1,10)
+        xmine = randint(1,rows)
+        ymine = randint(1,cols)
         if playboard[xmine][ymine] == 9:
             continue
         playboard[xmine][ymine] = 9
