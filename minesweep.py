@@ -7,6 +7,9 @@ def onObjectClick(event):
 
 def lose():
     print "you lose"
+    for i in xrange(1, rows+1):
+        for j in xrange(1, cols+1):
+            display(i, j)
 
 def reveal(tuple_loc):
     x, y = tuple_loc
@@ -51,6 +54,9 @@ if __name__ == "__main__":
     for i in xrange(1, rows+1):
         for j in xrange(1, cols+1):
             if playboard[i][j] == 9:
+                board.create_rectangle(i*tilesize+2, j*tilesize+2,
+                                       (i+1)*tilesize-2, (j+1)*tilesize-2,
+                                       fill="black")
                 continue
             for xs in xrange(-1, 2):
                 for ys in xrange(-1, 2):
