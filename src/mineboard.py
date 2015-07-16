@@ -23,7 +23,8 @@ class Mineboard:
         self.rectlist = dict()
         
         # Populate board with mines
-        # O(inf) time complexity
+        # O(inf) time complexity when totalmines > 1
+        '''
         totalmines = floor(rows*cols*mine_density)
         self.mines = 0
         while self.mines < totalmines:
@@ -32,6 +33,14 @@ class Mineboard:
                 continue
             self.playboard[mine_coord[0]][mine_coord[1]] = 9
             self.mines += 1
+        '''
+        # Trade time complexity for space complexity
+        self.mines = int(floor(rows*cols*mine_density))
+        every_tile = [(i, j) for i in xrange(cols) for j in xrange(rows)]
+        for i in xrange(self.mines):
+            coord = every_tile.pop(randint(0, len(every_tile)-1))
+            self.playboard[coord[0]][coord[1]] = 9
+        del every_tile[:]
 
     def populateBoard(self):
         for i in xrange(self.cols):
@@ -49,7 +58,7 @@ class Mineboard:
                 if self.playboard[i][j] > 0:
                     self.board.create_text((i+0.5)*self.tilesize+self.margin_width, (j+0.5)*self.tilesize+self.margin_height,
                                       text=str(self.playboard[i][j]))
-        # Why does this loop increment by tilesize while the previous loop increments by 1????
+
         for i in xrange(self.cols):
             for j in xrange(self.rows):
                 piece = self.board.create_rectangle(i*self.tilesize+2+self.margin_width, j*self.tilesize+2+self.margin_height,
@@ -57,10 +66,14 @@ class Mineboard:
                                                fill="gray", tags="rect")
                 self.rectlist[piece] = (i, j)
 
+    def onObjectActive(self, event):
+        self.active_obj = event.widget.find_closest(event.x, event.y)[0]
+        if self.board.itemcget(self.active_obj, "fill") != "red":
+            self.board.itemconfigure(self.active_obj, fill="black")
+
     def onObjectClick(self, event):
-        board_loc = event.widget.find_closest(event.x, event.y)[0]
-        if self.board.itemcget(board_loc, "fill") != "red":
-            self.reveal(self.rectlist[board_loc])
+        if self.board.itemcget(self.active_obj, "fill") != "red":
+            self.reveal(self.rectlist[self.active_obj])
 
     def flag(self, event):
         board_loc = event.widget.find_closest(event.x, event.y)[0]
@@ -70,13 +83,14 @@ class Mineboard:
             self.board.itemconfigure(board_loc, fill="gray")
 
     def bindBoardEvents(self):
-        self.board.tag_bind("rect", "<ButtonPress-1>", self.onObjectClick)
-        self.board.tag_bind("rect", "<ButtonPress-2>", self.flag)
+        self.board.tag_bind("rect", "<ButtonPress-1>", self.onObjectActive)
+        self.board.tag_bind("rect", "<ButtonRelease-1>", self.onObjectClick)
+        self.board.tag_bind("rect", "<ButtonRelease-2>", self.flag)
 
     def lose(self):
         print "you lose"
         for i in xrange(self.cols):
-            for j in xrange(self.rows):
+            for j in xrange(self.rows  ):
                 self.display((i, j))
     
     def reveal(self, loc):
