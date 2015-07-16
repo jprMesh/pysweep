@@ -3,7 +3,15 @@ from random import randint
 
 def onObjectClick(event):
     board_loc = event.widget.find_closest(event.x, event.y)[0]
-    reveal(rectlist[board_loc])
+    if board.itemcget(board_loc, "fill") != "red":
+        reveal(rectlist[board_loc])
+
+def flag(event):
+    board_loc = event.widget.find_closest(event.x, event.y)[0]
+    if board.itemcget(board_loc, "fill") == "gray":
+        board.itemconfigure(board_loc, fill="red")
+    else:
+        board.itemconfigure(board_loc, fill="gray")
 
 def lose():
     print "you lose"
@@ -32,8 +40,8 @@ def display(x, y):
     playboard[x][y] = -1
 
 if __name__ == "__main__":
-    rows = 50
-    cols = 10
+    rows = 30
+    cols = 20
     tilesize = 20
     totalmines = rows*cols*0.15
 
@@ -74,5 +82,6 @@ if __name__ == "__main__":
             rectlist[piece] = (xinit/tilesize, yinit/tilesize)
 
     board.tag_bind("rect", "<ButtonPress-1>", onObjectClick)
+    board.tag_bind("rect", "<ButtonPress-2>", flag)
     board.pack()
     root.mainloop()
