@@ -61,15 +61,15 @@ class Mineboard:
 
         for i in xrange(self.cols):
             for j in xrange(self.rows):
-                piece = self.board.create_rectangle(i*self.tilesize+2+self.margin_width, j*self.tilesize+2+self.margin_height,
-                                               (i+1)*self.tilesize-2+self.margin_width, (j+1)*self.tilesize-2+self.margin_height,
+                piece = self.board.create_rectangle(i*self.tilesize+self.margin_width, j*self.tilesize+self.margin_height,
+                                               (i+1)*self.tilesize+self.margin_width, (j+1)*self.tilesize+self.margin_height,
                                                fill="gray", tags="rect")
                 self.rectlist[piece] = (i, j)
 
     def onObjectActive(self, event):
         self.active_obj = event.widget.find_closest(event.x, event.y)[0]
         if self.board.itemcget(self.active_obj, "fill") != "red":
-            self.board.itemconfigure(self.active_obj, fill="black")
+            self.board.itemconfigure(self.active_obj, fill="dark gray")
 
     def onObjectClick(self, event):
         if self.board.itemcget(self.active_obj, "fill") != "red":
