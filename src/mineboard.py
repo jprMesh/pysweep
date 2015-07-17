@@ -68,18 +68,18 @@ class Mineboard:
 
     def onObjectActive(self, event):
         self.active_obj = event.widget.find_closest(event.x, event.y)[0]
-        if self.board.itemcget(self.active_obj, "fill") != "red":
+        if self.board.itemcget(self.active_obj, "fill") != "red" and self.board.itemcget(self.active_obj, "fill") != "":
             self.board.itemconfigure(self.active_obj, fill="dark gray")
 
     def onObjectClick(self, event):
-        if self.board.itemcget(self.active_obj, "fill") != "red":
+        if self.board.itemcget(self.active_obj, "fill") != "red" and self.board.itemcget(self.active_obj, "fill") != "":
             self.reveal(self.rectlist[self.active_obj])
 
     def flag(self, event):
         board_loc = event.widget.find_closest(event.x, event.y)[0]
         if self.board.itemcget(board_loc, "fill") == "gray":
             self.board.itemconfigure(board_loc, fill="red")
-        else:
+        elif self.board.itemcget(self.active_obj, "fill") == "red":
             self.board.itemconfigure(board_loc, fill="gray")
 
     def bindBoardEvents(self):
