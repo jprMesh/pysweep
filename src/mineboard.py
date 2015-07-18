@@ -1,9 +1,9 @@
+from Tkinter import *
 from math import floor
 from random import randint
 
-class Mineboard:
-    def __init__(self, 
-                 board,
+class Mineboard(Frame):
+    def __init__(self,
                  mine_density = 0.15,
                  rows = 20,
                  cols = 30,
@@ -11,7 +11,10 @@ class Mineboard:
                  margin_width = 20,
                  margin_height = 20):
 
-        self.board = board
+        Frame.__init__(self)
+        self.grid(row=0, column=0)
+        self.board = Canvas(self, width=tilesize*cols+margin_width*2, height=tilesize*rows+margin_height*2)
+        self.board.pack()
 
         self.rows = rows
         self.cols = cols
@@ -79,7 +82,7 @@ class Mineboard:
         board_loc = event.widget.find_closest(event.x, event.y)[0]
         if self.board.itemcget(board_loc, "fill") == "gray":
             self.board.itemconfigure(board_loc, fill="red")
-        elif self.board.itemcget(self.active_obj, "fill") == "red":
+        elif self.board.itemcget(board_loc, "fill") == "red":
             self.board.itemconfigure(board_loc, fill="gray")
 
     def bindBoardEvents(self):
