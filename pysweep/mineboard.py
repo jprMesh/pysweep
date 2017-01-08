@@ -14,8 +14,8 @@ class Mineboard(Frame):
         Frame.__init__(self)
         self.grid(row=0, column=0)
         self.board = Canvas(self,
-                            width=tilesize*cols+margin_width*2,
-                            height=tilesize*rows+margin_height*2)
+                            width = 2*margin_width + cols*tilesize,
+                            height = 2*margin_height + rows*tilesize)
         self.board.pack()
 
         self.rows = rows
@@ -23,53 +23,68 @@ class Mineboard(Frame):
         self.tilesize = tilesize
         self.margin_width = margin_width
         self.margin_height = margin_height
+        self.mines = int(floor(rows * cols * mine_density))
         
-        self.playboard = [[0 for i in xrange(rows)] for j in xrange(cols)]
+        self.underboard = [[0 for i in xrange(rows)] for j in xrange(cols)]
         self.rectlist = dict()
-        
-        # Trade time complexity for space complexity
-        self.mines = int(floor(rows*cols*mine_density))
-        every_tile = [(i, j) for i in xrange(cols) for j in xrange(rows)]
-        for i in xrange(self.mines):
-            coord = every_tile.pop(randint(0, len(every_tile)-1))
-            self.playboard[coord[0]][coord[1]] = 9
-        del every_tile[:]
 
-    def setup(self):
+        self._setup()
+
+    def _setup(self):
         '''
         Create and ready up the board for play.
         '''
+        self._generateMines()
         self._populateLowerBoard()
         self._populateUpperBoard()
         self._bindBoardEvents()
+
+    def reset(self):
+        '''
+        Reset the board for another game.
+        '''
+        self.underboard[:] = 0
+        self.rectlist.clear()
+        self._setup()
+
+    def _generateMines(self):
+        '''
+        Generate mine locations.
+        '''
+        every_tile = [(i, j) for i in xrange(self.cols)
+                             for j in xrange(self.rows)]
+        for i in xrange(self.mines):
+            coord = every_tile.pop(randint(0, len(every_tile)-1))
+            self.underboard[coord[0]][coord[1]] = 9
+        del every_tile[:]
 
     def _populateLowerBoard(self):
         '''
         Fill in the lower level of the board containing the mines and numbers.
         '''
-        for i in xrange(self.cols):
-            for j in xrange(self.rows):
-                if self.playboard[i][j] == 9:
+        for col in xrange(self.cols):
+            for row in xrange(self.rows):
+                if self.underboard[col][row] == 9:
                     self.board.create_rectangle(
-                        i*self.tilesize+2+self.margin_width,
-                        j*self.tilesize+2+self.margin_height,
-                        (i+1)*self.tilesize-2+self.margin_width,
-                        (j+1)*self.tilesize-2+self.margin_height,
+                        col*self.tilesize+2+self.margin_width,
+                        row*self.tilesize+2+self.margin_height,
+                        (col+1)*self.tilesize-2+self.margin_width,
+                        (row+1)*self.tilesize-2+self.margin_height,
                         fill="black")
                     continue
                 # Increment number for each mine in surrounding 8 spaces
                 for xs in xrange(-1, 2):
                     for ys in xrange(-1, 2):
-                        if i+xs >= 0 and i+xs < self.cols and \
-                           j+ys >= 0 and j+ys < self.rows and \
-                           self.playboard[i+xs][j+ys] == 9:
-                            self.playboard[i][j] += 1
-                # 
-                if self.playboard[i][j] > 0:
+                        if col+xs >= 0 and col+xs < self.cols and \
+                           row+ys >= 0 and row+ys < self.rows and \
+                           self.underboard[col+xs][row+ys] == 9:
+                            self.underboard[col][row] += 1
+                # Write text on squares
+                if self.underboard[col][row] > 0:
                     self.board.create_text(
-                        (i+0.5)*self.tilesize+self.margin_width,
-                        (j+0.5)*self.tilesize+self.margin_height,
-                        text=str(self.playboard[i][j]))
+                        (col+0.5)*self.tilesize + self.margin_width,
+                        (row+0.5)*self.tilesize + self.margin_height,
+                        text=str(self.underboard[col][row]))
 
     def _populateUpperBoard(self):
         '''
@@ -111,14 +126,14 @@ class Mineboard(Frame):
     def _lose(self):
         print "you lose"
         for i in xrange(self.cols):
-            for j in xrange(self.rows  ):
+            for j in xrange(self.rows):
                 self._display((i, j))
     
     def _reveal(self, loc):
         if loc[0] < 0 or loc[0] >= self.cols or \
            loc[1] < 0 or loc[1] >= self.rows:
             return
-        tile = self.playboard[loc[0]][loc[1]]
+        tile = self.underboard[loc[0]][loc[1]]
         if tile < 0:
             return
         elif tile == 9:
@@ -134,5 +149,5 @@ class Mineboard(Frame):
         tile = self.board.find_closest(loc[0]*self.tilesize+self.margin_width,
                                        loc[1]*self.tilesize+self.margin_height)
         self.board.itemconfigure(tile, fill="")
-        self.playboard[loc[0]][loc[1]] = -1
+        self.underboard[loc[0]][loc[1]] = -1
 
