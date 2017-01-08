@@ -39,15 +39,6 @@ class Mineboard(Frame):
         self._populateUpperBoard()
         self._bindBoardEvents()
 
-    def reset(self):
-        '''
-        Reset the board for another game.
-        '''
-        self.mines_remaining = self.mines
-        self.underboard[:] = 0
-        self.rectlist.clear()
-        self._setup()
-
     def _generateGUI(self):
         self.mine_counter = self.board.create_text(
                                 self.cols*self.tilesize,
@@ -128,17 +119,6 @@ class Mineboard(Frame):
             self.board.itemconfigure(board_loc, fill="gray")
             self.mines_remaining += 1
         self.board.itemconfig(self.mine_counter, text=str(self.mines_remaining))
-
-    def _bindBoardEvents(self):
-        self.board.tag_bind("rect", "<ButtonPress-1>", self._onClick)
-        self.board.tag_bind("rect", "<ButtonRelease-1>", self._onRelease)
-        self.board.tag_bind("rect", "<ButtonRelease-2>", self._onFlag)
-
-    def _lose(self):
-        print "you lose"
-        for i in xrange(self.cols):
-            for j in xrange(self.rows):
-                self._display((i, j))
     
     def _reveal(self, loc):
         if loc[0] < 0 or loc[0] >= self.cols or \
@@ -157,7 +137,45 @@ class Mineboard(Frame):
                     self._reveal(newloc)
     
     def _display(self, loc):
+        '''
+        Display what's behind a tile.
+        '''
         tile = self.board.find_closest(loc[0]*self.tilesize+self.margin,
                                        loc[1]*self.tilesize+self.margin_top)
         self.board.itemconfigure(tile, fill="")
         self.underboard[loc[0]][loc[1]] = -1
+
+    def _lose(self):
+        self.board.create_rectangle(
+            0.5*self.cols*self.tilesize + self.margin - 60,
+            0.5*self.margin_top - 15,
+            0.5*self.cols*self.tilesize + self.margin + 60,
+            0.5*self.margin_top + 15,
+            tags="reset_button",
+            fill="grey")
+        self.board.create_text(
+            0.5*self.cols*self.tilesize + self.margin,
+            0.5*self.margin_top,
+            font=(None, 18),
+            tags="reset_button",
+            text="New Game")
+        for i in xrange(self.cols):
+            for j in xrange(self.rows):
+                self._display((i, j))
+
+    def reset(self, event=None):
+        '''
+        Reset the board for another game.
+        '''
+        self.mines_remaining = self.mines
+        self.underboard = [[0 for i in xrange(self.rows)]
+                           for j in xrange(self.cols)]
+        self.rectlist.clear()
+        self.board.delete("all")
+        self._setup()
+
+    def _bindBoardEvents(self):
+        self.board.tag_bind("rect", "<ButtonPress-1>", self._onClick)
+        self.board.tag_bind("rect", "<ButtonRelease-1>", self._onRelease)
+        self.board.tag_bind("rect", "<ButtonRelease-2>", self._onFlag)
+        self.board.tag_bind("reset_button", "<ButtonRelease-1>", self.reset)
