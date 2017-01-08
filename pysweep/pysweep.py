@@ -8,7 +8,12 @@ from mineboard import Mineboard
 if __name__ == "__main__":
     root = Tk()
     root.title('Pysweep')
-
-    minefield = Mineboard(rows=15, cols=20, tilesize=20, margin_width=20, margin_height=20)
-
-    root.mainloop()
+    minefield = Mineboard(rows=15,
+                          cols=20,
+                          tilesize=20,
+                          margin=20)
+    while 1:
+        try:
+            root.update()
+        except Exception as e:
+            exit()
