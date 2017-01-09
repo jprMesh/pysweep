@@ -100,25 +100,40 @@ class Mineboard(Frame):
                 self.rectlist[piece] = (i, j)
 
     def _onClick(self, event):
-        self.active_obj = event.widget.find_closest(event.x, event.y)[0]
+        self.active_obj = self.board.find_closest(event.x, event.y)[0]
         if self.board.itemcget(self.active_obj, "fill") != "red" and \
            self.board.itemcget(self.active_obj, "fill") != "":
             self.board.itemconfigure(self.active_obj, fill="dark gray")
 
     def _onRelease(self, event):
+        self._clickSquare(event.x, event.y)
+
+    def _clickSquare(self, x, y):
+        self.active_obj = self.board.find_closest(x, y)[0]
         if self.board.itemcget(self.active_obj, "fill") != "red" and \
            self.board.itemcget(self.active_obj, "fill") != "":
             self._reveal(self.rectlist[self.active_obj])
 
     def _onFlag(self, event):
-        board_loc = event.widget.find_closest(event.x, event.y)[0]
-        if self.board.itemcget(board_loc, "fill") == "gray":
-            self.board.itemconfigure(board_loc, fill="red")
+        self._flagSquare(event.x, event.y)
+
+    def _flagSquare(self, x, y):
+        self.active_obj = self.board.find_closest(x, y)[0]
+        if self.board.itemcget(self.active_obj, "fill") == "gray":
+            self.board.itemconfigure(self.active_obj, fill="red")
             self.mines_remaining -= 1
-        elif self.board.itemcget(board_loc, "fill") == "red":
-            self.board.itemconfigure(board_loc, fill="gray")
+        elif self.board.itemcget(self.active_obj, "fill") == "red":
+            self.board.itemconfigure(self.active_obj, fill="gray")
             self.mines_remaining += 1
         self.board.itemconfig(self.mine_counter, text=str(self.mines_remaining))
+
+    def _onKeyPress(self, event):
+        x = self.winfo_pointerx()
+        y = self.winfo_pointery()
+        if event.char == "a":
+            self._clickSquare(x, y)
+        elif event.char == "q":
+            self._flagSquare(x, y)
     
     def _reveal(self, loc):
         if loc[0] < 0 or loc[0] >= self.cols or \
@@ -142,10 +157,18 @@ class Mineboard(Frame):
         '''
         tile = self.board.find_closest(loc[0]*self.tilesize+self.margin,
                                        loc[1]*self.tilesize+self.margin_top)
+        if self.board.itemcget(tile, "fill") == "red":
+            self.mines_remaining += 1
+            self.board.itemconfig(self.mine_counter,
+                                  text=str(self.mines_remaining))
         self.board.itemconfigure(tile, fill="")
         self.underboard[loc[0]][loc[1]] = -1
 
     def _lose(self):
+        '''
+        Called upon revealing a mine. Ends the game and reveals the board and a
+        button to start a new game.
+        '''
         self.board.create_rectangle(
             0.5*self.cols*self.tilesize + self.margin - 60,
             0.5*self.margin_top - 15,
@@ -179,3 +202,4 @@ class Mineboard(Frame):
         self.board.tag_bind("rect", "<ButtonRelease-1>", self._onRelease)
         self.board.tag_bind("rect", "<ButtonRelease-2>", self._onFlag)
         self.board.tag_bind("reset_button", "<ButtonRelease-1>", self.reset)
+        self.bind("<Key>", self._onKeyPress)
