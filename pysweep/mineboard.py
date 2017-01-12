@@ -12,6 +12,7 @@ class Mineboard(Frame):
 
         Frame.__init__(self)
         self.grid(row=0, column=0)
+        self.focus_set()
         self.margin_top = 50
         self.board = Canvas(self,
                             width = 2*margin + cols*tilesize,
@@ -26,6 +27,7 @@ class Mineboard(Frame):
         self.mines_remaining = self.mines
         self.underboard = [[0 for i in xrange(rows)] for j in xrange(cols)]
         self.rectlist = dict()
+        self.gameover = False
 
         self._setup()
 
@@ -112,7 +114,8 @@ class Mineboard(Frame):
         self.active_obj = self.board.find_closest(x, y)[0]
         if self.board.itemcget(self.active_obj, "fill") != "red" and \
            self.board.itemcget(self.active_obj, "fill") != "":
-            self._reveal(self.rectlist[self.active_obj])
+           if self.active_obj in self.rectlist:
+                self._reveal(self.rectlist[self.active_obj])
 
     def _onFlag(self, event):
         self._flagSquare(event.x, event.y)
@@ -128,8 +131,10 @@ class Mineboard(Frame):
         self.board.itemconfig(self.mine_counter, text=str(self.mines_remaining))
 
     def _onKeyPress(self, event):
-        x = self.winfo_pointerx()
-        y = self.winfo_pointery()
+        if self.gameover:
+            return
+        x = self.winfo_pointerx() + event.x
+        y = self.winfo_pointery() + event.y
         if event.char == "a":
             self._clickSquare(x, y)
         elif event.char == "q":
@@ -169,6 +174,7 @@ class Mineboard(Frame):
         Called upon revealing a mine. Ends the game and reveals the board and a
         button to start a new game.
         '''
+        self.gameover = True
         self.board.create_rectangle(
             0.5*self.cols*self.tilesize + self.margin - 60,
             0.5*self.margin_top - 15,
@@ -196,6 +202,7 @@ class Mineboard(Frame):
         self.rectlist.clear()
         self.board.delete("all")
         self._setup()
+        self.gameover = False
 
     def _bindBoardEvents(self):
         self.board.tag_bind("rect", "<ButtonPress-1>", self._onClick)
