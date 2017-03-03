@@ -5,4 +5,4 @@ Version: Beta 0.01
 This is a homemade version of Minesweeper written in Python.
 
 ### Gameplay Screenshot
-![Alt text](docs/gameplay.png "Pysweep Gameplay")
+<img src="docs/gameplay.png" alt="Pysweep Gameplay" width="50%">
