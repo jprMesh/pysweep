@@ -1,8 +1,14 @@
 from Tkinter import *
 from math import floor
 from random import randint
+from time import time as currenttime
 
 class Mineboard(Frame):
+    '''
+    Class representing the mineboard where the game is played. Contains board,
+    mines, all GUI, and all logic for handling input. Extends Tkinter's
+    Frame class.
+    '''
     def __init__(self,
                  mine_density = 0.15,
                  rows = 20,
@@ -28,9 +34,27 @@ class Mineboard(Frame):
         self.underboard = [[0 for i in xrange(rows)] for j in xrange(cols)]
         self.rectlist = dict()
         self.gameover = False
+        self.firstclick = True
+        self.timer_start = 0
+        self.timer_task_id = 0
 
         self._setup()
 
+    ### Public Functions #######################################################
+    def reset(self, event=None):
+        '''
+        Reset the board for another game.
+        '''
+        self.mines_remaining = self.mines
+        self.underboard = [[0 for i in xrange(self.rows)]
+                           for j in xrange(self.cols)]
+        self.rectlist.clear()
+        self.board.delete("all")
+        self._setup()
+        self.gameover = False
+        self.firstclick = True
+
+    ### Private Functions ######################################################
     def _setup(self):
         '''
         Create and ready up the board for play.
@@ -47,6 +71,12 @@ class Mineboard(Frame):
                                 0.5*self.margin_top,
                                 font=(None, 20),
                                 text=str(self.mines_remaining))
+        self.timer = self.board.create_text(
+                                1.5*self.margin,
+                                0.5*self.margin_top,
+                                font=(None, 20),
+                                text="{:>6.1f}".format(0),
+                                anchor=W)
 
     def _generateMines(self):
         '''
@@ -101,24 +131,16 @@ class Mineboard(Frame):
                     fill="gray", tags="rect")
                 self.rectlist[piece] = (i, j)
 
-    def _onClick(self, event):
-        self.active_obj = self.board.find_closest(event.x, event.y)[0]
-        if self.board.itemcget(self.active_obj, "fill") != "red" and \
-           self.board.itemcget(self.active_obj, "fill") != "":
-            self.board.itemconfigure(self.active_obj, fill="dark gray")
-
-    def _onRelease(self, event):
-        self._clickSquare(event.x, event.y)
-
     def _clickSquare(self, x, y):
+        if self.firstclick:
+            self.timer_start = currenttime()
+            self._update_timer()
+            self.firstclick = False
         self.active_obj = self.board.find_closest(x, y)[0]
         if self.board.itemcget(self.active_obj, "fill") != "red" and \
            self.board.itemcget(self.active_obj, "fill") != "":
            if self.active_obj in self.rectlist:
                 self._reveal(self.rectlist[self.active_obj])
-
-    def _onFlag(self, event):
-        self._flagSquare(event.x, event.y)
 
     def _flagSquare(self, x, y):
         self.active_obj = self.board.find_closest(x, y)[0]
@@ -129,16 +151,6 @@ class Mineboard(Frame):
             self.board.itemconfigure(self.active_obj, fill="gray")
             self.mines_remaining += 1
         self.board.itemconfig(self.mine_counter, text=str(self.mines_remaining))
-
-    def _onKeyPress(self, event):
-        if self.gameover:
-            return
-        x = self.winfo_pointerx() + event.x
-        y = self.winfo_pointery() + event.y
-        if event.char == "a":
-            self._clickSquare(x, y)
-        elif event.char == "q":
-            self._flagSquare(x, y)
     
     def _reveal(self, loc):
         if loc[0] < 0 or loc[0] >= self.cols or \
@@ -175,6 +187,7 @@ class Mineboard(Frame):
         button to start a new game.
         '''
         self.gameover = True
+        self.after_cancel(self.timer_task_id)
         self.board.create_rectangle(
             0.5*self.cols*self.tilesize + self.margin - 60,
             0.5*self.margin_top - 15,
@@ -192,21 +205,38 @@ class Mineboard(Frame):
             for j in xrange(self.rows):
                 self._display((i, j))
 
-    def reset(self, event=None):
-        '''
-        Reset the board for another game.
-        '''
-        self.mines_remaining = self.mines
-        self.underboard = [[0 for i in xrange(self.rows)]
-                           for j in xrange(self.cols)]
-        self.rectlist.clear()
-        self.board.delete("all")
-        self._setup()
-        self.gameover = False
+    def _update_timer(self):
+        self.board.itemconfig(
+                self.timer,
+                text="{:>6.1f}".format(currenttime() - self.timer_start))
+        self.timer_task_id = self.after(100, self._update_timer)
 
+    ### Interaction logic ######################################################
     def _bindBoardEvents(self):
-        self.board.tag_bind("rect", "<ButtonPress-1>", self._onClick)
-        self.board.tag_bind("rect", "<ButtonRelease-1>", self._onRelease)
+        self.board.tag_bind("rect", "<ButtonPress-1>", self._onMouseDown)
+        self.board.tag_bind("rect", "<ButtonRelease-1>", self._onMouseUp)
         self.board.tag_bind("rect", "<ButtonRelease-2>", self._onFlag)
         self.board.tag_bind("reset_button", "<ButtonRelease-1>", self.reset)
         self.bind("<Key>", self._onKeyPress)
+
+    def _onMouseDown(self, event):
+        self.active_obj = self.board.find_closest(event.x, event.y)[0]
+        if self.board.itemcget(self.active_obj, "fill") != "red" and \
+           self.board.itemcget(self.active_obj, "fill") != "":
+            self.board.itemconfigure(self.active_obj, fill="dark gray")
+
+    def _onMouseUp(self, event):
+        self._clickSquare(event.x, event.y)
+
+    def _onFlag(self, event):
+        self._flagSquare(event.x, event.y)
+
+    def _onKeyPress(self, event):
+        if self.gameover:
+            return
+        x = self.winfo_pointerx() + event.x
+        y = self.winfo_pointery() + event.y
+        if event.char == "a":
+            self._clickSquare(x, y)
+        elif event.char == "q":
+            self._flagSquare(x, y)
