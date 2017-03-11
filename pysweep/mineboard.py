@@ -53,6 +53,7 @@ class Mineboard(Frame):
         self._setup()
         self.gameover = False
         self.firstclick = True
+        self.board.itemconfig(self.mine_counter, text=str(self.mines_remaining))
 
     ### Private Functions ######################################################
     def _setup(self):
@@ -186,6 +187,7 @@ class Mineboard(Frame):
         Called upon revealing a mine. Ends the game and reveals the board and a
         button to start a new game.
         '''
+        mines = self.mines_remaining
         self.gameover = True
         self.after_cancel(self.timer_task_id)
         self.board.create_rectangle(
@@ -204,6 +206,7 @@ class Mineboard(Frame):
         for i in xrange(self.cols):
             for j in xrange(self.rows):
                 self._display((i, j))
+        self.board.itemconfig(self.mine_counter, text=str(mines))
 
     def _update_timer(self):
         self.board.itemconfig(
