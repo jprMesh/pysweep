@@ -152,6 +152,8 @@ class Mineboard(Frame):
             self.board.itemconfigure(self.active_obj, fill="gray")
             self.mines_remaining += 1
         self.board.itemconfig(self.mine_counter, text=str(self.mines_remaining))
+        if self.mines_remaining == 0:
+            self._checkWin()
     
     def _reveal(self, loc):
         if loc[0] < 0 or loc[0] >= self.cols or \
@@ -181,6 +183,37 @@ class Mineboard(Frame):
                                   text=str(self.mines_remaining))
         self.board.itemconfigure(tile, fill="")
         self.underboard[loc[0]][loc[1]] = -1
+
+    def _checkWin(self):
+        for i in xrange(self.cols):
+            for j in xrange(self.rows):
+                if self.underboard[i][j] == 9:
+                    tile = self.board.find_closest(i*self.tilesize+self.margin,
+                                                   (j*self.tilesize
+                                                    +self.margin_top))
+                    if self.board.itemcget(tile, "fill") != "red":
+                        return
+        self._win()
+
+    def _win(self):
+        '''
+        Called upon winning the game by marking all mines correctly.
+        '''
+        self.gameover = True
+        self.after_cancel(self.timer_task_id)
+        self._drawNewGameButton()
+        self.board.create_rectangle(
+            0.5*self.cols*self.tilesize + self.margin - 70,
+            2*self.margin_top - 20,
+            0.5*self.cols*self.tilesize + self.margin + 70,
+            2*self.margin_top + 20,
+            fill="white",
+            outline="")
+        self.board.create_text(
+            0.5*self.cols*self.tilesize + self.margin,
+            2*self.margin_top,
+            font=(None, 30),
+            text="Nice Job!")
 
     def _lose(self):
         '''
