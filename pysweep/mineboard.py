@@ -187,9 +187,14 @@ class Mineboard(Frame):
         Called upon revealing a mine. Ends the game and reveals the board and a
         button to start a new game.
         '''
-        mines = self.mines_remaining
         self.gameover = True
         self.after_cancel(self.timer_task_id)
+        self._drawNewGameButton()
+        for i in xrange(self.cols):
+            for j in xrange(self.rows):
+                self._display((i, j))
+
+    def _drawNewGameButton(self):
         self.board.create_rectangle(
             0.5*self.cols*self.tilesize + self.margin - 60,
             0.5*self.margin_top - 15,
@@ -203,10 +208,6 @@ class Mineboard(Frame):
             font=(None, 18),
             tags="reset_button",
             text="New Game")
-        for i in xrange(self.cols):
-            for j in xrange(self.rows):
-                self._display((i, j))
-        self.board.itemconfig(self.mine_counter, text=str(mines))
 
     def _update_timer(self):
         self.board.itemconfig(
